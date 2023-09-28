@@ -1,4 +1,4 @@
 # TODO:: This
 
 ### Executable
-pyinstaller -F --paths=venv\Lib\site-packages  InkboundDamage.py
+pyinstaller -F --paths=venv\Lib\site-packages  src/InkboundDamage.py
