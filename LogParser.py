@@ -2,8 +2,8 @@ import time
 import re
 import os
 
-from src import Display
-from src.Domain import GameLog, Player
+import Display
+from Domain import GameLog, Player
 
 game_log = GameLog()
 

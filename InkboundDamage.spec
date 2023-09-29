@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src\\InkboundDamage.py'],
+    ['InkboundDamage.py'],
     pathex=['venv\\Lib\\site-packages'],
     binaries=[],
     datas=[],
