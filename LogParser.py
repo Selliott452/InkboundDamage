@@ -30,7 +30,7 @@ def follow():
 
 def handle_line(line, game):
     if "Party run start triggered" in line:
-        reset_game()
+        reset_game(game)
     if "is playing ability" in line:
         register_new_player(line, game)
     if "broadcasting EventOnUnitDamaged" in line:
@@ -47,9 +47,9 @@ def register_class(line, game):
     game.entity_to_class_id[entity_id] = class_type
 
 
-def reset_game():
-    global game_log
-    game_log.players = {}
+def reset_game(game):
+    game.sync_player_classes()
+    game.games.append({})
     Display.reset()
 
 
@@ -72,24 +72,28 @@ def register_status_effect_stacks(line, game):
     else:
         stacks_removed = int(stacks_removed.group())
 
+    players = game.get_players()
+
     if type == 'Added':
         # if the target is a player record status effects received
-        if target_unit_id in game.players.keys():
-            game.players[target_unit_id].status_effects_received[effect] = (
-                    game.players[target_unit_id].status_effects_received.get(effect, 0) + stacks_added)
+        if target_unit_id in players.keys():
+            players[target_unit_id].status_effects_received[effect] = (
+                    players[target_unit_id].status_effects_received.get(effect, 0) + stacks_added)
 
         # if the attacker is a player record status effects applied
-        if caster_unit_id in game.players.keys():
-            game.players[caster_unit_id].status_effects_applied[effect] = (
-                    game.players[caster_unit_id].status_effects_applied.get(effect, 0) + stacks_added)
+        if caster_unit_id in players.keys():
+            players[caster_unit_id].status_effects_applied[effect] = (
+                    players[caster_unit_id].status_effects_applied.get(effect, 0) + stacks_added)
 
 
 def register_new_player(line, game):
     player_id = int(re.search("(?<=\(EntityHandle:)(\d*)", line).group())
     player_name = re.search("(?<=I )([a-zA-Z-_]*)", line).group()
 
-    if player_id not in game.players.keys():
-        game.players[player_id] = Player(player_id, player_name, {}, {}, {}, {})
+    players = game.get_players()
+
+    if player_id not in players.keys():
+        players[player_id] = Player(player_id, player_name, None, {}, {}, {}, {})
 
 
 def register_ability_damage(line, game):
@@ -100,12 +104,14 @@ def register_ability_damage(line, game):
     damage_type = re.search("(?<=ActionData:)([a-zA-Z-_]*)", line).group().removeprefix(
         "ActionData-").removesuffix("_Action").removesuffix("_ActionData").removesuffix("Damage").removesuffix("_")
 
+    players = game.get_players()
+
     # if the target is a player record damage received
-    if target_id in game.players.keys():
-        game.players[target_id].damage_received[damage_type] = (
-                game.players[target_id].damage_received.get(damage_type, 0) + damage_amount)
+    if target_id in players.keys():
+        players[target_id].damage_received[damage_type] = (
+                players[target_id].damage_received.get(damage_type, 0) + damage_amount)
 
     # if the attacker is a player record damage dealt
-    if attacker_id in game.players.keys():
-        game.players[attacker_id].damage_dealt[damage_type] = (
-                game.players[attacker_id].damage_dealt.get(damage_type, 0) + damage_amount)
+    if attacker_id in players.keys():
+        players[attacker_id].damage_dealt[damage_type] = (
+                players[attacker_id].damage_dealt.get(damage_type, 0) + damage_amount)

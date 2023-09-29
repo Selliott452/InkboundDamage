@@ -1,27 +1,10 @@
 from dataclasses import dataclass
 
-
-class GameLog:
-    entity_to_class_id: dict[int, str] = {}
-
-    def __init__(self):
-        self.players: dict[int, Player] = {}
-
-    def get_total_damage(self):
-        game_total_damage = 0
-        for player in self.players.values():
-            for value in player.damage_dealt.values():
-                game_total_damage += value
-        return game_total_damage
-
-    def get_percent_total_damage(self, entity):
-        return '({:.1%})'.format(entity.get_total_damage() / self.get_total_damage())
-
-
 @dataclass
 class Player:
     id: int
     name: str
+    class_id: str
     damage_dealt: dict[str, int]
     damage_received: dict[str, int]
     status_effects_applied: dict[str, int]
@@ -41,3 +24,28 @@ class Player:
 
     def get_percent_total_damage(self, damage_source):
         return '({:.1%})'.format(self.damage_dealt[damage_source] / self.get_total_damage())
+
+
+class GameLog:
+    entity_to_class_id: dict[int, str] = {}
+    games: list[dict[int, Player]] = [{}]
+
+    def sync_player_classes(self):
+        for player in self.get_players().values():
+            if player.id in self.entity_to_class_id.keys():
+                player.class_id = self.entity_to_class_id[player.id]
+
+    def get_players(self):
+        return self.games[-1]
+
+    def get_total_damage(self):
+        game_total_damage = 0
+        for player in self.get_players().values():
+            for value in player.damage_dealt.values():
+                game_total_damage += value
+        return game_total_damage
+
+    def get_percent_total_damage(self, entity):
+        return '({:.1%})'.format(entity.get_total_damage() / self.get_total_damage())
+
+

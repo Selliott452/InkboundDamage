@@ -4,8 +4,8 @@ root = tk.Tk()
 root.title("Inkbound Damage")
 root.attributes('-topmost', True)
 canvas = tk.Canvas(root)
+#root.attributes('-alpha', 0.8)
 canvas.pack()
-
 player_frames = {}
 player_labels: dict[int, dict[str, any]] = {}
 
@@ -20,7 +20,15 @@ def reset():
 
 
 def render(game_log):
-    for player in game_log.players.values():
+    players = game_log.get_players()
+
+    for player in players.values():
+
+        player_class_id = "Unknown"
+        if player.class_id:
+            player_class_id = player.class_id
+        elif player.id in game_log.entity_to_class_id.keys():
+            player_class_id = game_log.entity_to_class_id[player.id]
 
         if player.id not in player_frames.keys():
             player_frames[player.id] = tk.Frame(canvas, border=10)
@@ -34,7 +42,7 @@ def render(game_log):
             player_name_label = tk.Label(player_frame,
                                          font=('Helvetica', 10, 'bold'),
                                          foreground="white",
-                                         background=get_class_color(game_log.entity_to_class_id[player.id]),
+                                         background=get_class_color(player_class_id),
                                          width=50)
             player_name_label.grid(row=0, columnspan=3)
             player_labels[player.id]["player_name_label"] = player_name_label
@@ -81,10 +89,11 @@ def render(game_log):
             amount = player_labels[player.id][ability + "_amount"]
             percent = player_labels[player.id][ability + "_percent"]
 
+
+
             player_name_label.config(
-                text=player.name + ' - ' + get_class_name(
-                    game_log.entity_to_class_id[player.id]) + ' ' + game_log.get_percent_total_damage(
-                    player))
+                text=player.name + ' - ' + get_class_name(player_class_id
+                                                          ) + ' ' + game_log.get_percent_total_damage(player))
             total_damage_amount.config(text=str(player.get_total_damage()))
             damage_received_amount.config(text=str(player.get_total_damage_received()))
             label.grid(row=i, column=0, sticky=tk.W)
@@ -111,6 +120,8 @@ def get_class_name(class_id):
         return "Unknown"
     elif class_id == "C07":
         return "Star Captain"
+    else:
+        return class_id
 
 
 def get_class_color(class_id):
@@ -127,4 +138,6 @@ def get_class_color(class_id):
     elif class_id == "C06":
         return "grey"
     elif class_id == "C07":
-        return "#fef160"
+        return "#F4C430"
+    else:
+        return "grey"
