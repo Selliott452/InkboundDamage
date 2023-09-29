@@ -52,4 +52,4 @@ A single file executable can be created by adding the `-F` flag
 ### Contact
 Discord:
 
-![Discord](/images/discord.png)
+![Discord](/images/Discord.png)
