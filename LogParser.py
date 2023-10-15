@@ -100,9 +100,18 @@ def register_ability_damage(line, game):
     target_id = int(re.search("(?<=TargetUnitHandle:\(EntityHandle:)(\d*)", line).group())
     attacker_id = int(re.search("(?<=SourceEntityHandle:\(EntityHandle:)(\d*)", line).group())
     damage_amount = int(re.search("(?<=DamageAmount:)(\d*)", line).group())
+    
     # Why is their naming scheme so jank??
+    # Example
+    # ConstrictUpgrade_Legendary_Entwine becomes Constrict -> Entwine
     damage_type = re.search("(?<=ActionData:)([a-zA-Z-_]*)", line).group().removeprefix(
         "ActionData-").removesuffix("_Action").removesuffix("_ActionData").removesuffix("Damage").removesuffix("_")
+    
+    if "Upgrade_Legendary_" in damage_type:
+        damage_type = damage_type.replace( "Upgrade_Legendary_", " -> ")
+
+    if "All_Legendary_" in damage_type:
+        damage_type = damage_type.replace( "All_Legendary_", " - ")
 
     players = game.get_players()
 
