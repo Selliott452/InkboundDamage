@@ -6,7 +6,11 @@ import Display
 from Domain import GameLog, Player
 
 game_log = GameLog()
-RUN_NUMBER = 0  # starts at 0, increments by 1 each new reset_game
+
+# Globals
+DIVE_NUMBER = 0  # starts at 0, increments by 1 each new reset_game
+COMBAT_NUMBER = 0  # starts at 0, increments by 1 each time combat start is triggered
+TURN_NUMBER = 0  # starts at 0, increments by 1 each time a turn is triggered, resets to 0 on combat end
 
 
 def parse():
@@ -33,10 +37,23 @@ def follow():
 
 
 def handle_line(line, game):
-    if "Party run start triggered" in line:  ## is this the same message for solo runs?
+    if "Party run start triggered" in line:
         reset_game(game)
-        global RUN_NUMBER
-        RUN_NUMBER += 1
+        global DIVE_NUMBER
+        global COMBAT_NUMBER
+        DIVE_NUMBER += 1
+        COMBAT_NUMBER = 0
+
+    if "EventOnCombatStarted" in line:
+        COMBAT_NUMBER += 1
+
+    if "QuestObjective_TurnCount" in line:
+        global TURN_NUMBER
+        TURN_NUMBER += 1
+    
+    if "TargetingSystem handling event: EventOnCombatEndSequenceStarted" in line:
+        # Reset turns to 0
+        TURN_NUMBER = 0
 
     if "is playing ability" in line:
         register_new_player(line, game)
@@ -47,10 +64,13 @@ def handle_line(line, game):
     # if "EventOnUnitStatusEffectStacks" in line:
     #     register_status_effect_stacks(line, game)
 
-    ## todo: find log that shows combat start/end
-    ## Todo: find log that shows turn start/end
-
-    ## todo: find log that shows run finished
+    ## TODO: find log that shows run finished
+    ## TODO: 0T18:20:52 29 I [VfxSystem] InitAndTriggerEntityIntro-Loot: (EntityHandle:39) Generic_Loot_Potion(Clone)
+    ## TODO: 0T18:21:28 16 I Spawning Encounter_Medium_NoGeo in socket Combat
+    ## TODO: 0T18:21:28 16 I Rolled enemy group suffix: UnitData-Figment_Large_ALL_T1_Unit (Figment dTORXHoH): (StatusEffectData-ChallengeBuff_GlassCannon_Base_StatusEffect (Glass Cannon sqgof87p))
+    ## TODO: 0T18:21:28 16 I WorldCommandSpawnUnit (EntityHandle:55): groupSuffixIndex 3 (ChallengeBuff_GlassCannon_Base_StatusEffect)
+    ## TODO: 0T18:25:35 25 I Evaluating quest progress for (EntityHandle:15) with 62 active quests. Record variable: StatUpgrade_AllClasses_FrostbiteDamage_Applied_QuestPR
+    ## TODO: 0T18:25:43 00 I Evaluating quest progress for (EntityHandle:15) with 62 active quests. Record variable: CryostasisUpgrade_Common_AddFrostbite_QuestPR
 
 
 def register_class(line, game):
