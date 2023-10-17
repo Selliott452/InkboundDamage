@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Player:
     id: int
@@ -23,7 +24,9 @@ class Player:
         return player_damage_taken
 
     def get_percent_total_damage(self, damage_source):
-        return '({:.1%})'.format(self.damage_dealt[damage_source] / self.get_total_damage())
+        return "({:.1%})".format(
+            self.damage_dealt[damage_source] / self.get_total_damage()
+        )
 
 
 class GameLog:
@@ -46,6 +49,4 @@ class GameLog:
         return game_total_damage
 
     def get_percent_total_damage(self, entity):
-        return '({:.1%})'.format(entity.get_total_damage() / self.get_total_damage())
-
-
+        return "({:.1%})".format(entity.get_total_damage() / self.get_total_damage())

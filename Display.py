@@ -2,9 +2,9 @@ import tkinter as tk
 
 root = tk.Tk()
 root.title("Inkbound Damage")
-root.attributes('-topmost', True)
+root.attributes("-topmost", True)
 canvas = tk.Canvas(root)
-#root.attributes('-alpha', 0.8)
+# root.attributes('-alpha', 0.8)
 canvas.pack()
 player_frames = {}
 player_labels: dict[int, dict[str, any]] = {}
@@ -23,7 +23,6 @@ def render(game_log):
     players = game_log.get_players()
 
     for player in players.values():
-
         player_class_id = "Unknown"
         if player.class_id:
             player_class_id = player.class_id
@@ -39,11 +38,13 @@ def render(game_log):
             player_labels[player.id] = {}
 
         if "player_name_label" not in player_labels[player.id].keys():
-            player_name_label = tk.Label(player_frame,
-                                         font=('Helvetica', 10, 'bold'),
-                                         foreground="white",
-                                         background=get_class_color(player_class_id),
-                                         width=50)
+            player_name_label = tk.Label(
+                player_frame,
+                font=("Helvetica", 10, "bold"),
+                foreground="white",
+                background=get_class_color(player_class_id),
+                width=50,
+            )
             player_name_label.grid(row=0, columnspan=3)
             player_labels[player.id]["player_name_label"] = player_name_label
 
@@ -58,7 +59,9 @@ def render(game_log):
             player_labels[player.id]["total_damage_amount"] = total_damage_amount
 
         if "damage_received_label" not in player_labels[player.id].keys():
-            damage_received_label = tk.Label(player_frame, text="Total Damage Received (Including blocked)")
+            damage_received_label = tk.Label(
+                player_frame, text="Total Damage Received (Including blocked)"
+            )
             damage_received_label.grid(row=2, column=0, sticky=tk.W)
             player_labels[player.id]["damage_received_label"] = damage_received_label
 
@@ -67,9 +70,12 @@ def render(game_log):
             damage_received_amount.grid(row=2, column=1, sticky=tk.E)
             player_labels[player.id]["damage_received_amount"] = damage_received_amount
 
-        abilities = sorted(player.damage_dealt.keys(), reverse=True, key=lambda x: player.damage_dealt[x])
+        abilities = sorted(
+            player.damage_dealt.keys(),
+            reverse=True,
+            key=lambda x: player.damage_dealt[x],
+        )
         for i, ability in enumerate(abilities, start=3):
-
             if ability + "_label" not in player_labels[player.id].keys():
                 label = tk.Label(player_frame, text=ability)
                 player_labels[player.id][ability + "_label"] = label
@@ -89,11 +95,13 @@ def render(game_log):
             amount = player_labels[player.id][ability + "_amount"]
             percent = player_labels[player.id][ability + "_percent"]
 
-
-
             player_name_label.config(
-                text=player.name + ' - ' + get_class_name(player_class_id
-                                                          ) + ' ' + game_log.get_percent_total_damage(player))
+                text=player.name
+                + " - "
+                + get_class_name(player_class_id)
+                + " "
+                + game_log.get_percent_total_damage(player)
+            )
             total_damage_amount.config(text=str(player.get_total_damage()))
             damage_received_amount.config(text=str(player.get_total_damage_received()))
             label.grid(row=i, column=0, sticky=tk.W)

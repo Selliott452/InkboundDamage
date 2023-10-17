@@ -6,6 +6,7 @@ import Display
 from Domain import GameLog, Player
 
 game_log = GameLog()
+RUN_NUMBER = 0  # starts at 0, increments by 1 each new reset_game
 
 
 def parse():
@@ -14,7 +15,10 @@ def parse():
 
 
 def follow():
-    file = open(os.environ["USERPROFILE"] + "/AppData/LocalLow/Shiny Shoe/Inkbound/logfile.log", "r")
+    file = open(
+        os.environ["USERPROFILE"] + "/AppData/LocalLow/Shiny Shoe/Inkbound/logfile.log",
+        "r",
+    )
     while True:
         # read last line of file
         next_line = file.readline()
@@ -22,15 +26,18 @@ def follow():
         # sleep if file hasn't been updated
         if not next_line:
             Display.render(game_log)
-            time.sleep(0.1)
+            time.sleep(0.1)  # can probably increase this to reduce program resources
             continue
 
         yield next_line
 
 
 def handle_line(line, game):
-    if "Party run start triggered" in line:
+    if "Party run start triggered" in line:  ## is this the same message for solo runs?
         reset_game(game)
+        global RUN_NUMBER
+        RUN_NUMBER += 1
+
     if "is playing ability" in line:
         register_new_player(line, game)
     if "broadcasting EventOnUnitDamaged" in line:
@@ -40,9 +47,18 @@ def handle_line(line, game):
     # if "EventOnUnitStatusEffectStacks" in line:
     #     register_status_effect_stacks(line, game)
 
+    ## todo: find log that shows combat start/end
+    ## Todo: find log that shows turn start/end
+
+    ## todo: find log that shows run finished
+
 
 def register_class(line, game):
-    entity_id = int(re.search("(?<=animation-UnitEntityHandle:\(EntityHandle:)([\-\d]*)", line).group())
+    entity_id = int(
+        re.search(
+            "(?<=animation-UnitEntityHandle:\(EntityHandle:)([\-\d]*)", line
+        ).group()
+    )
     class_type = re.search("(?<=classType:)([a-zA-Z0-9]*)", line).group()
     game.entity_to_class_id[entity_id] = class_type
 
@@ -56,9 +72,15 @@ def reset_game(game):
 def register_status_effect_stacks(line, game):
     # TODO:: clean this up
     type = re.search("(?<=EventOnUnitStatusEffectStacks)([a-zA-Z]*)", line).group()
-    caster_unit_id = int(re.search("(?<=CasterUnitEntityHandle:\(EntityHandle:)([\-\d]*)", line).group())
-    target_unit_id = int(re.search("(?<=TargetUnitEntityHandle:\(EntityHandle:)([\-\d]*)", line).group())
-    effect = re.search("(?<=StatusEffectData:StatusEffectData-)([a-zA-Z-_]*)", line).group()
+    caster_unit_id = int(
+        re.search("(?<=CasterUnitEntityHandle:\(EntityHandle:)([\-\d]*)", line).group()
+    )
+    target_unit_id = int(
+        re.search("(?<=TargetUnitEntityHandle:\(EntityHandle:)([\-\d]*)", line).group()
+    )
+    effect = re.search(
+        "(?<=StatusEffectData:StatusEffectData-)([a-zA-Z-_]*)", line
+    ).group()
 
     stacks_added = re.search("(?<=StacksAdded:)(\d*)", line)
     if stacks_added is None:
@@ -74,16 +96,20 @@ def register_status_effect_stacks(line, game):
 
     players = game.get_players()
 
-    if type == 'Added':
+    if type == "Added":
         # if the target is a player record status effects received
         if target_unit_id in players.keys():
             players[target_unit_id].status_effects_received[effect] = (
-                    players[target_unit_id].status_effects_received.get(effect, 0) + stacks_added)
+                players[target_unit_id].status_effects_received.get(effect, 0)
+                + stacks_added
+            )
 
         # if the attacker is a player record status effects applied
         if caster_unit_id in players.keys():
             players[caster_unit_id].status_effects_applied[effect] = (
-                    players[caster_unit_id].status_effects_applied.get(effect, 0) + stacks_added)
+                players[caster_unit_id].status_effects_applied.get(effect, 0)
+                + stacks_added
+            )
 
 
 def register_new_player(line, game):
@@ -96,31 +122,51 @@ def register_new_player(line, game):
         players[player_id] = Player(player_id, player_name, None, {}, {}, {}, {})
 
 
-def register_ability_damage(line, game):
-    target_id = int(re.search("(?<=TargetUnitHandle:\(EntityHandle:)(\d*)", line).group())
-    attacker_id = int(re.search("(?<=SourceEntityHandle:\(EntityHandle:)(\d*)", line).group())
-    damage_amount = int(re.search("(?<=DamageAmount:)(\d*)", line).group())
-    
-    # Why is their naming scheme so jank??
-    # Example
-    # ConstrictUpgrade_Legendary_Entwine becomes Constrict -> Entwine
-    damage_type = re.search("(?<=ActionData:)([a-zA-Z-_]*)", line).group().removeprefix(
-        "ActionData-").removesuffix("_Action").removesuffix("_ActionData").removesuffix("Damage").removesuffix("_")
-    
-    if "Upgrade_Legendary_" in damage_type:
-        damage_type = damage_type.replace( "Upgrade_Legendary_", " -> ")
-
+# ConstrictUpgrade_Legendary_Entwine becomes Constrict -> Entwine
+def clean_damage_type_jank(damage_type):
+    # Maybe remove vestige and just leave the vestige name?
     if "All_Legendary_" in damage_type:
-        damage_type = damage_type.replace( "All_Legendary_", " - ")
+        damage_type = damage_type.replace("All_Legendary_", " -> ")
+
+    if "Upgrade_Legendary_" in damage_type:
+        damage_type = damage_type.replace("Upgrade_Legendary_", " -> ")
+
+    if "_Legendary_" in damage_type:
+        damage_type = damage_type.replace("_Legendary_", " -> ")
+
+    return damage_type
+
+
+def register_ability_damage(line, game):
+    target_id = int(
+        re.search("(?<=TargetUnitHandle:\(EntityHandle:)(\d*)", line).group()
+    )
+    attacker_id = int(
+        re.search("(?<=SourceEntityHandle:\(EntityHandle:)(\d*)", line).group()
+    )
+    damage_amount = int(re.search("(?<=DamageAmount:)(\d*)", line).group())
+
+    # Why is their naming scheme so jank??
+    damage_type = (
+        re.search("(?<=ActionData:)([a-zA-Z-_]*)", line)
+        .group()
+        .removeprefix("ActionData-")
+        .removesuffix("_Action")
+        .removesuffix("_ActionData")
+        .removesuffix("Damage")
+        .removesuffix("_")
+    )
 
     players = game.get_players()
 
     # if the target is a player record damage received
     if target_id in players.keys():
         players[target_id].damage_received[damage_type] = (
-                players[target_id].damage_received.get(damage_type, 0) + damage_amount)
+            players[target_id].damage_received.get(damage_type, 0) + damage_amount
+        )
 
     # if the attacker is a player record damage dealt
     if attacker_id in players.keys():
         players[attacker_id].damage_dealt[damage_type] = (
-                players[attacker_id].damage_dealt.get(damage_type, 0) + damage_amount)
+            players[attacker_id].damage_dealt.get(damage_type, 0) + damage_amount
+        )
