@@ -28,6 +28,19 @@ class Player:
             self.damage_dealt[damage_source] / self.get_total_damage()
         )
 
+class DamageDealt:
+    id: int
+
+class DamageTaken:
+    id: int
+
+class Entity:
+    id: int
+    isPlayer: bool
+    isEnemy: bool
+    isBoss: bool
+    isPotion: bool
+
 
 class GameLog:
     entity_to_class_id: dict[int, str] = {}
