@@ -50,7 +50,7 @@ def handle_line(line, game):
     if "QuestObjective_TurnCount" in line:
         global TURN_NUMBER
         TURN_NUMBER += 1
-    
+
     if "TargetingSystem handling event: EventOnCombatEndSequenceStarted" in line:
         # Reset turns to 0
         TURN_NUMBER = 0
@@ -167,7 +167,7 @@ def register_ability_damage(line, game):
     damage_amount = int(re.search("(?<=DamageAmount:)(\d*)", line).group())
 
     # Why is their naming scheme so jank??
-    damage_type = (
+    damage_type = clean_damage_type_jank(
         re.search("(?<=ActionData:)([a-zA-Z-_]*)", line)
         .group()
         .removeprefix("ActionData-")

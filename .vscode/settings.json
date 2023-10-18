@@ -6,6 +6,7 @@
     "python.testing.pytestEnabled": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[python]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none"
 }
