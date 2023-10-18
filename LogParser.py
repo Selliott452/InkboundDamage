@@ -36,6 +36,36 @@ def follow():
         yield next_line
 
 
+# 0T01:10:03 56 I [EventSystem] broadcasting EventOnUnitDamaged-WorldStateChangeDamageUnit-TargetUnitHandle:(EntityHandle:79)-SourceEntityHandle:(EntityHandle:21)-TargetUnitTeam:Enemy-IsInActiveCombat:True-DamageAmount:56-IsCriticalHit:False-WasDodged:False-
+# ActionData:ActionData-C05_Momentum_Remove_StatusEffect_Action (rT1ASjkD)-AbilityData:(none)-StatusEffectData:StatusEffectData-C05_Momentum_StatusEffect (Crush MdQNgazl)-LootableData:(none)
+class EventSystem:
+    Timestamp: str
+    Type: str
+    EventOn: str
+    WorldState: str
+    TargetUnitHandle: int
+    SourceEntityHandle: int
+    TargetUnitTeam: str  # can ignore
+    IsInActiveCombat: bool  # can ignore
+    DamageAmount: int
+    IsCriticalHit: bool
+    WasDodged: bool
+    ActionData: str  # janky
+    AbilityData: str
+    StatusEffectData: str
+    LootableData: str  # can ignore ( for now? )
+
+    def __init__(self, line):
+        re_eventsystem = re.search(
+            "(?P<timestamp>.*?) \d\d I \[EventSystem\] broadcasting EventOn(?P<EventOn>.*?)-WorldState(?P<WorldState>.*?)-TargetUnitHandle:\(EntityHandle:(?P<TargetUnitHandle>\d\d)\)-SourceEntityHandle:\(EntityHandle:(?P<SourceEntityHandle>\d\d)\)-TargetUnitTeam:(?P<TargetUnitTeam>.*?)-IsInActiveCombat:(?P<IsInActiveCombat>.*?)-DamageAmount:(?P<DamageAmount>.*?)-IsCriticalHit:(?P<IsCriticalHit>.*?)-WasDodged:(?P<WasDodged>.*?)-ActionData:ActionData-(?P<ActionData>.*?)-AbilityData:(?P<AbilityData>.*?)-StatusEffectData:StatusEffectData-(?P<StatusEffectData>.*?)-LootableData:(?P<LootableData>.*?)\Z",
+            line,
+        )
+
+        self.Timestamp = re_eventsystem.group("timestamp")
+
+        pass
+
+
 def handle_line(line, game):
     if "Party run start triggered" in line:
         reset_game(game)
