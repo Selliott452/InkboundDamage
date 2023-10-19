@@ -3,19 +3,19 @@ import re
 import os
 
 import Display
-from Domain import GameLog, Player
-
-game_log = GameLog()
+from Domain import DiveLog, Player
 
 # Globals
 DIVE_NUMBER = 0  # starts at 0, increments by 1 each new reset_game
 COMBAT_NUMBER = 0  # starts at 0, increments by 1 each time combat start is triggered
 TURN_NUMBER = 0  # starts at 0, increments by 1 each time a turn is triggered, resets to 0 on combat end
 
+DIVE_LOG = DiveLog(0)
+
 
 def parse():
     for line in follow():
-        handle_line(line, game_log)
+        handle_line(line)
 
 
 def follow():
@@ -29,7 +29,7 @@ def follow():
 
         # sleep if file hasn't been updated
         if not next_line:
-            Display.render(game_log)
+            Display.render(DIVE_LOG)
             time.sleep(0.1)  # can probably increase this to reduce program resources
             continue
 
@@ -66,13 +66,18 @@ class EventSystem:
         pass
 
 
-def handle_line(line, game):
+def handle_line(line):
+    global DIVE_LOG
+
     if "Party run start triggered" in line:
-        reset_game(game)
+        reset_dive(DIVE_LOG)
+
         global DIVE_NUMBER
         global COMBAT_NUMBER
         DIVE_NUMBER += 1
         COMBAT_NUMBER = 0
+
+        DIVE_LOG = DiveLog(DIVE_NUMBER)
 
     if "EventOnCombatStarted" in line:
         COMBAT_NUMBER += 1
@@ -86,11 +91,11 @@ def handle_line(line, game):
         TURN_NUMBER = 0
 
     if "is playing ability" in line:
-        register_new_player(line, game)
+        register_new_player(line, DIVE_LOG)
     if "broadcasting EventOnUnitDamaged" in line:
-        register_ability_damage(line, game)
+        register_ability_damage(line, DIVE_LOG)
     if "Setting unit class for" in line:
-        register_class(line, game)
+        register_class(line, DIVE_LOG)
     # if "EventOnUnitStatusEffectStacks" in line:
     #     register_status_effect_stacks(line, game)
 
@@ -103,23 +108,25 @@ def handle_line(line, game):
     ## TODO: 0T18:25:43 00 I Evaluating quest progress for (EntityHandle:15) with 62 active quests. Record variable: CryostasisUpgrade_Common_AddFrostbite_QuestPR
 
 
-def register_class(line, game):
+def register_class(line, dive):
     entity_id = int(
         re.search(
             "(?<=animation-UnitEntityHandle:\(EntityHandle:)([\-\d]*)", line
         ).group()
     )
     class_type = re.search("(?<=classType:)([a-zA-Z0-9]*)", line).group()
-    game.entity_to_class_id[entity_id] = class_type
+    dive.entity_to_class_id[entity_id] = class_type
 
 
-def reset_game(game):
-    game.sync_player_classes()
-    game.games.append({})
+# perhaps restructure to allow multiple dives?
+def reset_dive(dive):
+    dive.sync_player_classes()
+    dive.dives.append({})
+    # may not need to reset, thinking about adding tabs for each dive and sub tabs for combats
     Display.reset()
 
 
-def register_status_effect_stacks(line, game):
+def register_status_effect_stacks(line, dive):
     # TODO:: clean this up
     type = re.search("(?<=EventOnUnitStatusEffectStacks)([a-zA-Z]*)", line).group()
     caster_unit_id = int(
@@ -144,7 +151,7 @@ def register_status_effect_stacks(line, game):
     else:
         stacks_removed = int(stacks_removed.group())
 
-    players = game.get_players()
+    players = dive.get_players()
 
     if type == "Added":
         # if the target is a player record status effects received
@@ -162,11 +169,11 @@ def register_status_effect_stacks(line, game):
             )
 
 
-def register_new_player(line, game):
+def register_new_player(line, dive):
     player_id = int(re.search("(?<=\(EntityHandle:)(\d*)", line).group())
     player_name = re.search("(?<=I )([a-zA-Z-_]*)", line).group()
 
-    players = game.get_players()
+    players = dive.get_players()
 
     if player_id not in players.keys():
         players[player_id] = Player(player_id, player_name, None, {}, {}, {}, {})
@@ -187,7 +194,7 @@ def clean_damage_type_jank(damage_type):
     return damage_type
 
 
-def register_ability_damage(line, game):
+def register_ability_damage(line, dive):
     target_id = int(
         re.search("(?<=TargetUnitHandle:\(EntityHandle:)(\d*)", line).group()
     )
@@ -207,7 +214,7 @@ def register_ability_damage(line, game):
         .removesuffix("_")
     )
 
-    players = game.get_players()
+    players = dive.get_players()
 
     # if the target is a player record damage received
     if target_id in players.keys():
