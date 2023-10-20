@@ -1,6 +1,7 @@
 import time
 import re
 import os
+import threading
 
 import Display
 from Domain import DiveLog, Player
@@ -12,10 +13,24 @@ TURN_NUMBER = 0  # starts at 0, increments by 1 each time a turn is triggered, r
 
 DIVE_LOG = DiveLog(0)
 
+KILLED = False
+
+
+# TODO make this whole file into a proper thread
+class LogParserThread(threading.Thread):
+    pass
+
 
 def parse():
     for line in follow():
         handle_line(line)
+        if KILLED:
+            SystemExit()
+
+
+def kill():
+    global KILLED
+    KILLED = True
 
 
 def follow():
@@ -37,6 +52,7 @@ def follow():
         yield next_line
 
 
+# TODO: is this necessary?
 # 0T01:10:03 56 I [EventSystem] broadcasting EventOnUnitDamaged-WorldStateChangeDamageUnit-TargetUnitHandle:(EntityHandle:79)-SourceEntityHandle:(EntityHandle:21)-TargetUnitTeam:Enemy-IsInActiveCombat:True-DamageAmount:56-IsCriticalHit:False-WasDodged:False-
 # ActionData:ActionData-C05_Momentum_Remove_StatusEffect_Action (rT1ASjkD)-AbilityData:(none)-StatusEffectData:StatusEffectData-C05_Momentum_StatusEffect (Crush MdQNgazl)-LootableData:(none)
 class EventSystem:
