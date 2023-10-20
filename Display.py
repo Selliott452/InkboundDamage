@@ -69,26 +69,24 @@ def render(dive_log):
             player_labels[player.id]["player_name_label"] = player_name_label
 
         if "total_damage_label" not in player_labels[player.id].keys():
-            total_damage_label = tk.Label(player_frame, text="Total Damage Dealt")
-            total_damage_label.grid(row=1, column=0, sticky=tk.W)
-            player_labels[player.id]["total_damage_label"] = total_damage_label
+            player_labels[player.id]["total_damage_label"] = label_and_grid(
+                player_frame, "Total Damage Dealt", 1, 0, tk.W
+            )
 
         if "total_damage_amount" not in player_labels[player.id].keys():
-            total_damage_amount = tk.Label(player_frame)
-            total_damage_amount.grid(row=1, column=1, sticky=tk.E)
-            player_labels[player.id]["total_damage_amount"] = total_damage_amount
+            player_labels[player.id]["total_damage_amount"] = label_and_grid(
+                player_frame, None, 1, 1, tk.E
+            )
 
         if "damage_received_label" not in player_labels[player.id].keys():
-            damage_received_label = tk.Label(
-                player_frame, text="Total Damage Received (Including blocked)"
+            player_labels[player.id]["damage_received_label"] = label_and_grid(
+                player_frame, "Total Damage Received (Including blocked)", 2, 0, tk.W
             )
-            damage_received_label.grid(row=2, column=0, sticky=tk.W)
-            player_labels[player.id]["damage_received_label"] = damage_received_label
 
         if "damage_received_amount" not in player_labels[player.id].keys():
-            damage_received_amount = tk.Label(player_frame)
-            damage_received_amount.grid(row=2, column=1, sticky=tk.E)
-            player_labels[player.id]["damage_received_amount"] = damage_received_amount
+            player_labels[player.id]["damage_received_amount"] = label_and_grid(
+                player_frame, None, 2, 1, tk.E
+            )
 
         abilities = sorted(
             player.damage_dealt.keys(),
@@ -131,6 +129,13 @@ def render(dive_log):
             percent.config(text=player.get_percent_total_damage(ability))
 
         player_frame.pack()
+
+
+def label_and_grid(player_frame, label_text, row, column, sticky) -> tk.Label:
+    label = tk.Label(player_frame, text=label_text)
+    label.grid(row=row, column=column, sticky=sticky)
+
+    return label
 
 
 def get_class_name(class_id):
