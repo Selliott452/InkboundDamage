@@ -1,24 +1,49 @@
+from collections.abc import Callable, Iterable, Mapping
 import time
 import re
 import os
 import threading
+from typing import Any
 
 import Display
 from Domain import DiveLog, Player
 
 # Globals
-DIVE_NUMBER = 0  # starts at 0, increments by 1 each new reset_game
+DIVE_NUMBER: int = 0  # starts at 0, increments by 1 each new reset_game
 COMBAT_NUMBER = 0  # starts at 0, increments by 1 each time combat start is triggered
 TURN_NUMBER = 0  # starts at 0, increments by 1 each time a turn is triggered, resets to 0 on combat end
 
 DIVE_LOG = DiveLog(0)
+DIVE_LOGS = []
 
 KILLED = False
 
 
 # TODO make this whole file into a proper thread
 class LogParserThread(threading.Thread):
-    pass
+    KILLED: bool
+
+    def __init__(
+        self,
+        group: None = None,
+        target: Callable[..., object] | None = None,
+        name: str | None = None,
+        args: Iterable[Any] = ...,
+        kwargs: Mapping[str, Any] | None = None,
+        *,
+        daemon: bool | None = None
+    ) -> None:
+        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        self.KILLED = False
+
+    def run(self):
+        for line in follow():
+            handle_line(line)
+            if self.KILLED is True:
+                SystemExit()
+
+    def kill(self):
+        self.KILLED = True
 
 
 def parse():
@@ -45,7 +70,7 @@ def follow():
         # sleep if file hasn't been updated
         if not next_line:
             # TODO: create array of dive logs to send to render
-            Display.render(DIVE_LOG)
+            Display.render(DIVE_LOGS)
             time.sleep(0.1)  # can probably increase this to reduce program resources
             continue
 
@@ -94,7 +119,10 @@ def handle_line(line):
         DIVE_NUMBER += 1
         COMBAT_NUMBER = 0
 
+        # create DIVE_LOG for current dive
         DIVE_LOG = DiveLog(DIVE_NUMBER)
+        # add DIVE_LOG to array
+        DIVE_LOGS.append(DIVE_LOG)
 
     if "EventOnCombatStarted" in line:
         COMBAT_NUMBER += 1
@@ -140,7 +168,7 @@ def reset_dive(dive):
     dive.sync_player_classes()
     dive.dives.append({})
     # may not need to reset, thinking about adding tabs for each dive and sub tabs for combats
-    Display.reset()
+    # Display.reset()
 
 
 def register_status_effect_stacks(line, dive):
