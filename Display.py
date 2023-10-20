@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 root = tk.Tk()
 root.title("Inkbound Damage")
@@ -10,6 +11,9 @@ player_frames = {}
 player_labels: dict[int, dict[str, any]] = {}
 
 
+DIVE_TABS = {}
+
+
 def reset():
     global player_labels
     player_labels = {}
@@ -19,15 +23,30 @@ def reset():
         child.destroy()
 
 
-def render(game_log):
-    players = game_log.get_players()
+def render(dive_log):
+    global DIVE_TABS
+
+    # if DIVE_TABS is empty
+    if not bool(DIVE_TABS):
+        # create tab controller
+        tabControl = ttk.Notebook(canvas)
+        # create a frame for current dive
+        dive_tab = ttk.Frame(tabControl)
+
+        # add tab to all tabs
+        DIVE_TABS[dive_log.dive_number] = dive_tab
+
+        tabControl.add(dive_tab, text="Dive #" + str(dive_log.dive_number))
+        tabControl.pack(expand=1, fill="both")
+
+    players = dive_log.get_players()
 
     for player in players.values():
         player_class_id = "Unknown"
         if player.class_id:
             player_class_id = player.class_id
-        elif player.id in game_log.entity_to_class_id.keys():
-            player_class_id = game_log.entity_to_class_id[player.id]
+        elif player.id in dive_log.entity_to_class_id.keys():
+            player_class_id = dive_log.entity_to_class_id[player.id]
 
         if player.id not in player_frames.keys():
             player_frames[player.id] = tk.Frame(canvas, border=10)
@@ -100,7 +119,7 @@ def render(game_log):
                 + " - "
                 + get_class_name(player_class_id)
                 + " "
-                + game_log.get_percent_total_damage(player)
+                + dive_log.get_percent_total_damage(player)
             )
             total_damage_amount.config(text=str(player.get_total_damage()))
             damage_received_amount.config(text=str(player.get_total_damage_received()))

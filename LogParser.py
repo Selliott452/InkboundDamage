@@ -29,6 +29,7 @@ def follow():
 
         # sleep if file hasn't been updated
         if not next_line:
+            # TODO: create array of dive logs to send to render
             Display.render(DIVE_LOG)
             time.sleep(0.1)  # can probably increase this to reduce program resources
             continue
