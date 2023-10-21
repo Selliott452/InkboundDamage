@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Player:
     id: int
     name: str
     class_id: str
-    damage_dealt: dict[str, int]
-    damage_received: dict[str, int]
-    status_effects_applied: dict[str, int]
-    status_effects_received: dict[str, int]
+    # [ damage source, total damage, run, combat, turn ]
+    damage_dealt: dict[str, int, int, int, int]
+    damage_received: dict[str, int, int, int, int]
+    status_effects_applied: dict[str, int, int, int, int]
+    status_effects_received: dict[str, int, int, int, int]
 
     def get_total_damage(self):
         player_total_damage = 0
@@ -23,12 +25,19 @@ class Player:
         return player_damage_taken
 
     def get_percent_total_damage(self, damage_source):
-        return '({:.1%})'.format(self.damage_dealt[damage_source] / self.get_total_damage())
+        return "({:.1%})".format(
+            self.damage_dealt[damage_source] / self.get_total_damage()
+        )
 
 
-class GameLog:
+# restructure to allow multiple dives
+class DiveLog:
     entity_to_class_id: dict[int, str] = {}
-    games: list[dict[int, Player]] = [{}]
+    dives: list[dict[int, Player]] = [{}]
+    dive_number: int
+
+    def __init__(self, dive_number) -> None:
+        self.dive_number = dive_number
 
     def sync_player_classes(self):
         for player in self.get_players().values():
@@ -36,7 +45,7 @@ class GameLog:
                 player.class_id = self.entity_to_class_id[player.id]
 
     def get_players(self):
-        return self.games[-1]
+        return self.dives[-1]
 
     def get_total_damage(self):
         game_total_damage = 0
@@ -46,6 +55,8 @@ class GameLog:
         return game_total_damage
 
     def get_percent_total_damage(self, entity):
-        return '({:.1%})'.format(entity.get_total_damage() / self.get_total_damage())
+        return "({:.1%})".format(entity.get_total_damage() / self.get_total_damage())
 
 
+# TODO: CombatLog
+# TODO: TurnLog
