@@ -31,8 +31,7 @@ def render(dive_log):
         # create tab controller
         tabControl = ttk.Notebook(canvas)
         # create a frame for current dive
-        dive_tab = ttk.Frame(tabControl, width=600, height=200)
-        dive_tab.pack(fill="both", expand=True)
+        dive_tab = ttk.Frame(tabControl)
 
         # add tab to all tabs
         DIVE_TABS[dive_log.dive_number] = dive_tab
@@ -50,7 +49,7 @@ def render(dive_log):
             player_class_id = dive_log.entity_to_class_id[player.id]
 
         if player.id not in player_frames.keys():
-            player_frames[player.id] = tk.Frame(dive_tab, border=10)
+            player_frames[player.id] = tk.Frame(canvas, border=10)
 
         player_frame = player_frames[player.id]
 
