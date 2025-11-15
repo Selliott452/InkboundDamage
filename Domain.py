@@ -6,11 +6,10 @@ class Player:
     id: int
     name: str
     class_id: str
-    # [ damage source, total damage, run, combat, turn ]
-    damage_dealt: dict[str, int, int, int, int]
-    damage_received: dict[str, int, int, int, int]
-    status_effects_applied: dict[str, int, int, int, int]
-    status_effects_received: dict[str, int, int, int, int]
+    damage_dealt: dict[str, int]
+    damage_received: dict[str, int]
+    status_effects_applied: dict[str, int]
+    status_effects_received: dict[str, int]
 
     def get_total_damage(self):
         player_total_damage = 0
@@ -29,14 +28,23 @@ class Player:
             self.damage_dealt[damage_source] / self.get_total_damage()
         )
 
+class DamageDealt:
+    id: int
 
-class DiveLog:
+class DamageTaken:
+    id: int
+
+class Entity:
+    id: int
+    isPlayer: bool
+    isEnemy: bool
+    isBoss: bool
+    isPotion: bool
+
+
+class GameLog:
     entity_to_class_id: dict[int, str] = {}
-    dives: list[dict[int, Player]] = [{}]
-    number: int
-
-    def __init__(self, dive_number) -> None:
-        self.number = dive_number
+    games: list[dict[int, Player]] = [{}]
 
     def sync_player_classes(self):
         for player in self.get_players().values():
@@ -44,7 +52,7 @@ class DiveLog:
                 player.class_id = self.entity_to_class_id[player.id]
 
     def get_players(self):
-        return self.dives[-1]
+        return self.games[-1]
 
     def get_total_damage(self):
         game_total_damage = 0
@@ -55,7 +63,3 @@ class DiveLog:
 
     def get_percent_total_damage(self, entity):
         return "({:.1%})".format(entity.get_total_damage() / self.get_total_damage())
-
-
-# TODO: CombatLog
-# TODO: TurnLog
