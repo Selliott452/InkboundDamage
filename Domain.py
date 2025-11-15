@@ -30,14 +30,13 @@ class Player:
         )
 
 
-# restructure to allow multiple dives
 class DiveLog:
     entity_to_class_id: dict[int, str] = {}
     dives: list[dict[int, Player]] = [{}]
-    dive_number: int
+    number: int
 
     def __init__(self, dive_number) -> None:
-        self.dive_number = dive_number
+        self.number = dive_number
 
     def sync_player_classes(self):
         for player in self.get_players().values():
